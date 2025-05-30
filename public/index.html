@@ -113,7 +113,7 @@
             line-height: 1.4;
         }
         .placed-heart-popup .heart-timestamp,
-        .placed-heart-popup .heart-location-display {
+        .placed-heart-popup .heart-location-display { /* Renamed for clarity */
             font-size: 0.8em;
             color: #666;
             line-height: 1.5;
@@ -123,7 +123,7 @@
             display: flex;
             align-items: center;
         }
-        .placed-heart-popup .heart-location-display img.flag-emoji {
+        .placed-heart-popup .heart-location-display img.flag-emoji { /* Updated class name */
             width: 18px; 
             height: auto;
             margin-right: 6px;
@@ -131,6 +131,7 @@
             box-shadow: 0 0 2px rgba(0,0,0,0.3);
         }
         
+        /* Styles for User Location Popup */
         .user-location-popup {
             padding: 15px 20px;
             min-width: 180px;
@@ -183,22 +184,22 @@
         .cluster-heart-icon-large .heart-emoji-cluster { font-size: 60px; }
         .cluster-heart-icon-large span { font-size: 18px; }
 
-        .marketing-overlay, .payment-success-overlay { /* Combined common styles */
+        .marketing-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background-image: radial-gradient(circle, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.6));
             display: flex; justify-content: center;
             align-items: center; z-index: 1500; pointer-events: all;
             opacity: 1; transition: opacity 0.5s ease;
         }
-        .marketing-overlay.hidden, .payment-success-overlay.hidden { /* Combined common styles */
+        .marketing-overlay.hidden {
             opacity: 0;
             pointer-events: none;
         }
-        .marketing-message-box, .payment-success-box { /* Combined common styles */
-            background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(10px);
+        .marketing-message-box {
+            background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px); padding: 40px; border-radius: 20px;
             box-shadow: 0 15px 50px rgba(0,0,0,0.4); text-align: center; max-width: 650px;
-            transform: scale(1); border: 1px solid rgba(255,255,255,0.5);
+            transform: scale(1);
         }
         .marketing-message-box h1 {
             font-size: 3.5em; color: #E02F2F; margin-bottom: 20px;
@@ -208,31 +209,19 @@
             font-size: 1.3em; color: #444; margin-bottom: 40px;
             line-height: 1.7; font-weight: 500;
         }
-        .marketing-message-box button, .payment-success-box button { /* Combined common styles */
+        .marketing-message-box button {
             background-color: #E02F2F; color: white; padding: 18px 40px;
             border: none; border-radius: 12px; font-size: 1.6em; font-weight: 800;
             cursor: pointer; transition: background-color 0.2s, transform 0.2s, box-shadow 0.2s;
+            animation: pulse 2.5s infinite ease-in-out;
         }
-        .marketing-message-box button {  animation: pulse 2.5s infinite ease-in-out; }
-
-        .marketing-message-box button:hover, .payment-success-box button:hover { /* Combined common styles */
+        .marketing-message-box button:hover {
             background-color: #c92c2c; transform: translateY(-3px);
             box-shadow: 0 8px 25px rgba(224, 47, 47, 0.6);
-        }
-        .marketing-message-box button:hover { animation-play-state: paused; }
-
-        /* Specific styles for payment success box */
-        .payment-success-box h2 {
-            font-size: 2.5em; color: #28a745; margin-bottom: 20px; /* Green for success */
-            font-weight: 700;
-        }
-        .payment-success-box p {
-            font-size: 1.2em; color: #333; margin-bottom: 30px; line-height: 1.6;
-        }
-        .payment-success-box .purchased-heart-emoji {
-            font-size: 3em; display: block; margin-bottom: 15px;
+            animation-play-state: paused;
         }
         
+        /* Heart Selection Popup - Base (Mobile First) */
         .heart-selection-popup {
             padding: 15px; 
             text-align: center; 
@@ -318,6 +307,7 @@
             text-decoration: underline;
         }
         
+        /* Desktop Styles for Heart Selection Popup */
         @media (min-width: 790px) { 
             .heart-selection-popup {
                 padding: 25px;
@@ -444,7 +434,7 @@
             z-index: 1001;
         }
 
-        @media (min-width: 769px) { 
+        @media (min-width: 769px) { /* Desktop Control Positions */
             #top-right-controls { top: 50px; right: 20px; }
             #bottom-left-controls { bottom: 20px; left: 20px; }
             #bottom-right-controls { bottom: 20px; right: 10px; }
@@ -480,7 +470,7 @@
             border-color: #E02F2F !important;
         }
         .leaflet-control-zoom { 
-            display: none !important; 
+            display: none !important; /* Hides Leaflet zoom controls */
         }
 
         #stats-window {
@@ -565,30 +555,31 @@
             border-radius: 3px;
         }
 
+        /* Mobile Specific Adjustments */
         @media (max-width: 768px) {
-            .marketing-message-box h1, .payment-success-box h2 { font-size: 2.5em; } 
-            .marketing-message-box p, .payment-success-box p { font-size: 1.1em; margin-bottom: 25px; } 
-            .marketing-message-box button, .payment-success-box button { font-size: 1.2em; padding: 14px 28px; } 
+            .marketing-message-box h1 { font-size: 2.5em; } 
+            .marketing-message-box p { font-size: 1.1em; margin-bottom: 25px; } 
+            .marketing-message-box button { font-size: 1.2em; padding: 14px 28px; } 
             
             #top-right-controls { 
-                top: calc(env(safe-area-inset-top, 0px) + 35px + 10px); 
+                top: calc(env(safe-area-inset-top, 0px) + 35px + 10px); /* News ticker height (~35px) + safe area + margin */
                 right: 10px; 
             } 
             #bottom-left-controls {
                 bottom: calc(env(safe-area-inset-bottom, 0px) + 10px);
                 left: calc(env(safe-area-inset-left, 0px) + 10px);
             }
-            #bottom-right-controls { 
+            #bottom-right-controls { /* This positions mapToggleBtn */
                 bottom: calc(env(safe-area-inset-bottom, 0px) + 10px);
                 right: calc(env(safe-area-inset-right, 0px) + 10px);
             } 
         }
 
-        @media (max-width: 480px) { 
-            .marketing-message-box, .payment-success-box { padding: 20px; } 
-            .marketing-message-box h1, .payment-success-box h2 { font-size: 2em; } 
-            .marketing-message-box p, .payment-success-box p { font-size: 0.95em; } 
-            .marketing-message-box button, .payment-success-box button { font-size: 1em; padding: 10px 20px; } 
+        @media (max-width: 480px) { /* Smallest Mobile Screens */
+            .marketing-message-box { padding: 20px; } 
+            .marketing-message-box h1 { font-size: 2em; } 
+            .marketing-message-box p { font-size: 0.95em; } 
+            .marketing-message-box button { font-size: 1em; padding: 10px 20px; } 
             
             .message-input-box { padding: 20px; width: calc(100% - 30px); }
             .message-input-box h2 { font-size: 1.3em; }
@@ -596,14 +587,14 @@
             .message-input-box textarea { font-size: 0.95em; height: 60px; }
 
             #top-right-controls { 
-                top: calc(env(safe-area-inset-top, 0px) + 30px + 5px); 
+                top: calc(env(safe-area-inset-top, 0px) + 30px + 5px); /* News ticker height (~30px) + safe area + margin */
                 right: 5px; 
             }
             #bottom-left-controls {
                 bottom: calc(env(safe-area-inset-bottom, 0px) + 5px);
                 left: calc(env(safe-area-inset-left, 0px) + 5px);
             }
-            #bottom-right-controls { 
+            #bottom-right-controls { /* This positions mapToggleBtn */
                 bottom: calc(env(safe-area-inset-bottom, 0px) + 5px); 
                 right: calc(env(safe-area-inset-right, 0px) + 5px);
             } 
@@ -661,7 +652,6 @@
     <div id="crossmark-container">
         <div id="crossmark"></div>
     </div>
-
     <div class="marketing-overlay" id="marketingOverlay">
         <div class="marketing-message-box">
             <h1>ilovehere</h1>
@@ -669,16 +659,6 @@
             <button id="getStartedBtn">Share a Memory</button>
         </div>
     </div>
-
-    <div class="payment-success-overlay hidden" id="paymentSuccessOverlay">
-        <div class="payment-success-box">
-            <h2>¡Pago Exitoso!</h2>
-            <span id="purchasedHeartEmoji" class="purchased-heart-emoji"></span>
-            <p id="paymentSuccessMessage">Tu corazón ha sido colocado. ¡Gracias!</p>
-            <button id="paymentSuccessContinueBtn">Continuar</button>
-        </div>
-    </div>
-
     <div class="message-input-overlay hidden" id="messageInputOverlay">
         <div class="message-input-box">
             <h2 id="messageModalTitle">Add a Message to Your Heart</h2>
@@ -699,8 +679,7 @@
         let heartSelectionPopup = null;
         let tickerInterval = null;
         let pendingHeartData = null; 
-        let postSuccessData = null; // To hold data after success message for next step
-        window.currentAllHeartsData = []; 
+        window.currentAllHeartsData = []; // To store hearts fetched from server
 
         // --- UI Elements ---
         const getLocationBtn = document.getElementById('getLocationBtn');
@@ -718,34 +697,30 @@
         const charCounter = document.getElementById('charCounter');
         const mapToggleBtn = document.getElementById('mapToggleBtn');
 
-        // NEW: Payment Success Overlay Elements
-        const paymentSuccessOverlay = document.getElementById('paymentSuccessOverlay');
-        const purchasedHeartEmoji = document.getElementById('purchasedHeartEmoji');
-        const paymentSuccessMessage = document.getElementById('paymentSuccessMessage');
-        const paymentSuccessContinueBtn = document.getElementById('paymentSuccessContinueBtn');
-
-
+        // --- Heart Definitions ---
+        // !!! IMPORTANT: Replace with your actual Stripe Payment Link URLs !!!
         const HEART_DEFINITIONS = {
             redHeart: { 
                 id: 'redHeart', name: 'Heart', emoji: '❤️', price: 1.00, 
                 canAddMessage: false, iconSize: [35, 35], 
                 clusterTextColor: '#fff', clusterTextShadow: '1px 1px 3px rgba(0,0,0,0.7)',
-                stripePaymentUrl: 'https://buy.stripe.com/5kQdRag378mw3QPcXJ6EU03' 
+                stripePaymentUrl: 'https://buy.stripe.com/5kQdRag378mw3QPcXJ6EU03' // Example: 'https://buy.stripe.com/xxxxxxREPLACE_ME'
             },
             silverHeart: { 
                 id: 'silverHeart', name: 'Silver Heart', emoji: '🤍', price: 3.00, 
                 canAddMessage: true, iconSize: [35, 35], maxLength: 10, 
                 clusterTextColor: '#333', clusterTextShadow: '1px 1px 3px rgba(200,200,200,0.7)',
-                stripePaymentUrl: 'https://buy.stripe.com/3cI00k4kp32c5YXbTF6EU01' 
+                stripePaymentUrl: 'https://buy.stripe.com/5kQcN6dUZgT2afdg9V6EU04' // Example: 'https://buy.stripe.com/yyyyyyREPLACE_ME'
             },
             yellowHeart: { 
                 id: 'yellowHeart', name: 'Gold Heart', emoji: '💛', price: 5.00, 
                 canAddMessage: true, iconSize: [35, 35], maxLength: 25, 
                 clusterTextColor: '#333', clusterTextShadow: '1px 1px 3px rgba(255,215,0,0.7)',
-                stripePaymentUrl: 'https://buy.stripe.com/7sY8wQ7wBgT22ML6zl6EU02' 
+                stripePaymentUrl: 'https://buy.stripe.com/00w14oaINbyI9b9e1N6EU05' // Example: 'https://buy.stripe.com/zzzzzzREPLACE_ME'
             }
         };
 
+        // --- Map Setup ---
         const initialLat = 20;
         const initialLng = -30;
         const initialZoom = 3;
@@ -856,7 +831,7 @@
         });
 
         map.on('click', (e) => {
-            if (!marketingOverlay.classList.contains('hidden') || !paymentSuccessOverlay.classList.contains('hidden')) return; // Don't open if any overlay is active
+            if (!marketingOverlay.classList.contains('hidden')) return;
             
             currentMapClickLocation = e.latlng;
             if (heartSelectionPopup) map.closePopup(heartSelectionPopup);
@@ -868,9 +843,6 @@
 
             const popupEl = document.createElement('div'); 
             popupEl.className = 'heart-selection-popup';
-            // Assuming prices are in MXN or local currency based on user's Stripe setup for working payments
-            // For display, you might want to explicitly state currency, e.g., MXN
-            // For now, keeping the $ symbol as per original code for consistency, but ensure it matches your charge currency.
             popupEl.innerHTML = `
                 <h3 class="popup-title">Choose a Heart & Secure with Stripe</h3>
                 <div class="heart-selection-popup-container">
@@ -927,6 +899,7 @@
                     
                     if (heartSelectionPopup) map.closePopup(heartSelectionPopup);
                     crossmarkContainer.style.display = 'none';
+
 
                     if (!heartDef.stripePaymentUrl || heartDef.stripePaymentUrl.includes('YOUR_STRIPE_PAYMENT_LINK_URL')) {
                         alert('Stripe Payment Link not configured for this heart. Please contact support or check script `HEART_DEFINITIONS`.');
@@ -991,37 +964,12 @@
             closeMessageModal();
         });
 
-        // Listener for the "Continue" button on the success overlay
-        paymentSuccessContinueBtn.addEventListener('click', () => {
-            if (!postSuccessData) return;
-
-            paymentSuccessOverlay.classList.add('hidden'); // Hide success overlay
-            const { location, heartId, heartDef } = postSuccessData;
-
-            if (heartDef.canAddMessage) {
-                pendingHeartData = { location, heartId }; // Set for message modal
-                messageModalTitle.textContent = `Añade un Mensaje a tu ${heartDef.name}`; // Updated text
-                messageModalDescription.textContent = `Escribe un mensaje corto (máx. ${heartDef.maxLength} caracteres).`; // Updated text
-                heartMessageInput.maxLength = heartDef.maxLength;
-                charCounter.textContent = `${heartDef.maxLength}/${heartDef.maxLength}`;
-                heartMessageInput.value = ''; 
-                messageInputOverlay.classList.remove('hidden');
-                heartMessageInput.focus();
-            } else {
-                placeHeart(location, '', heartId);
-            }
-            postSuccessData = null; // Clear temp data
-        });
-
 
         async function handleSuccessfulPayment() {
-            marketingOverlay.classList.add('hidden'); // Ensure marketing overlay is hidden
-
             const pendingPaymentString = localStorage.getItem('pendingPaymentHeart');
             if (!pendingPaymentString) {
                 console.warn('Payment success redirect, but no pending heart data found in localStorage.');
                 window.history.replaceState({}, document.title, window.location.pathname);
-                loadHeartsOnMap(); // Load map normally if no pending data
                 return;
             }
 
@@ -1035,28 +983,36 @@
                 console.error('Invalid heartId from localStorage after payment:', heartId);
                 alert('There was an issue processing your heart selection after payment. Please try again or contact support.');
                 window.history.replaceState({}, document.title, window.location.pathname);
-                loadHeartsOnMap();
                 return;
             }
 
             currentMapClickLocation = L.latLng(lat, lng); 
-            
-            // Store data for the success continue button
-            postSuccessData = { location: currentMapClickLocation, heartId: heartId, heartDef: heartDef };
 
-            // Update and show success message
-            purchasedHeartEmoji.textContent = heartDef.emoji;
-            paymentSuccessMessage.innerHTML = `¡Has añadido con éxito tu <strong>${heartDef.name}</strong> al mapa!`;
-            paymentSuccessOverlay.classList.remove('hidden');
+            map.panTo(currentMapClickLocation);
 
-            // Center map and zoom
-            map.setView(currentMapClickLocation, 17, { animate: true }); // Zoom level 17, adjust as needed
+            if (heartDef.canAddMessage) {
+                pendingHeartData = { location: currentMapClickLocation, heartId: heartId }; 
+                
+                messageModalTitle.textContent = `Add a Message to Your ${heartDef.name}`;
+                messageModalDescription.textContent = `Enter a short message (max ${heartDef.maxLength} characters).`;
+                heartMessageInput.maxLength = heartDef.maxLength;
+                charCounter.textContent = `${heartDef.maxLength}/${heartDef.maxLength}`;
+                heartMessageInput.value = ''; 
+                messageInputOverlay.classList.remove('hidden');
+                heartMessageInput.focus();
+            } else {
+                placeHeart(currentMapClickLocation, '', heartId);
+            }
 
             window.history.replaceState({}, document.title, window.location.pathname);
             
-            // Note: The actual placing of the heart or opening message modal now happens
-            // AFTER the user clicks "Continue" on the paymentSuccessOverlay.
-            // loadHeartsOnMap() will be called eventually after placeHeart.
+            if (!heartDef.canAddMessage) {
+                L.popup()
+                 .setLatLng(currentMapClickLocation)
+                 .setContent('Payment successful! Your heart is being placed.')
+                 .openOn(map);
+                setTimeout(() => { if(map.getPopup()) {map.closePopup();} }, 3000);
+            }
         }
 
 
@@ -1127,13 +1083,6 @@
         }
 
         async function loadHeartsOnMap() {
-            // Only clear and load if not currently showing success overlay
-            if (!paymentSuccessOverlay.classList.contains('hidden')) {
-                 // If success overlay is visible, placing might be pending continue.
-                 // loadHearts will be called by placeHeart eventually.
-                return;
-            }
-
             redHeartMarkers.clearLayers();
             silverHeartMarkers.clearLayers();
             yellowHeartMarkers.clearLayers();
@@ -1229,6 +1178,7 @@
                      locationText = `${flagHTML} ${locationText}`; 
                 }
 
+
                 if (heartDef.canAddMessage && heart.message) {
                     messageText = `A ${heartDef.emoji} with the message "<i>${heart.message}</i>" was just placed in ${locationText}`;
                 } else {
@@ -1241,7 +1191,7 @@
             let currentItem = 0;
             const items = newsTicker.querySelectorAll('.ticker-item');
             if (items.length > 0) {
-                if(items[currentItem]) items[currentItem].classList.add('visible'); 
+                if(items[currentItem]) items[currentItem].classList.add('visible'); // Check if items[currentItem] exists
                 tickerInterval = setInterval(() => {
                     if (items[currentItem]) items[currentItem].classList.remove('visible');
                     currentItem = (currentItem + 1) % items.length;
@@ -1253,31 +1203,19 @@
         document.addEventListener('DOMContentLoaded', () => {
             const urlParams = new URLSearchParams(window.location.search);
 
-            // Ensure marketing overlay is hidden if a payment status parameter is present
-            if (urlParams.has('payment_success') || urlParams.has('payment_cancelled') || urlParams.has('payment_failed')) {
-                marketingOverlay.classList.add('hidden');
-            }
-
-
             if (urlParams.has('payment_success') && urlParams.get('payment_success') === 'true') {
                 handleSuccessfulPayment(); 
             } else if (urlParams.has('payment_cancelled') && urlParams.get('payment_cancelled') === 'true') {
                 alert('Payment was cancelled.');
                 localStorage.removeItem('pendingPaymentHeart'); 
                 window.history.replaceState({}, document.title, window.location.pathname); 
-                loadHeartsOnMap(); // Still load map
             } else if (urlParams.has('payment_failed') && urlParams.get('payment_failed') === 'true') { 
                 alert('Payment failed. Please try again.');
                 localStorage.removeItem('pendingPaymentHeart');
                 window.history.replaceState({}, document.title, window.location.pathname);
-                loadHeartsOnMap(); // Still load map
-            } else {
-                // Only load hearts if not handling a payment redirect that will show a success message first
-                // or if marketing overlay is not supposed to be shown (e.g. user has already dismissed it)
-                if (marketingOverlay.classList.contains('hidden')) { // Or some other logic to determine if it's a fresh load vs. post-interaction
-                     loadHeartsOnMap(); 
-                }
             }
+
+            loadHeartsOnMap(); 
         });
     </script>
 </body>
