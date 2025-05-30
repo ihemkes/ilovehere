@@ -1,0 +1,1134 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ilovehere</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 6px 20px rgba(224, 47, 47, 0.5); }
+            50% { transform: scale(1.05); box-shadow: 0 10px 30px rgba(224, 47, 47, 0.7); }
+            100% { transform: scale(1); box-shadow: 0 6px 20px rgba(224, 47, 47, 0.5); }
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Poppins', sans-serif;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+        }
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+
+        .leaflet-div-icon {
+            background: none !important;
+            border: none !important;
+        }
+        .heart-emoji-marker, .user-location-emoji-marker {
+            font-size: 35px;
+            line-height: 1;
+            filter: drop-shadow(0 0 3px rgba(0,0,0,0.6));
+        }
+
+        #crossmark-container {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 1000; display: none;
+        }
+        #crossmark {
+            position: absolute; width: 30px; height: 30px; top: var(--crossmark-y, 50%);
+            left: var(--crossmark-x, 50%); transform: translate(-50%, -50%); pointer-events: none;
+        }
+        #crossmark::before, #crossmark::after {
+            content: ''; position: absolute; background-color: #ffffff;
+            opacity: 0.8; border-radius: 1px;
+        }
+        #crossmark::before { width: 2px; height: 100%; left: 50%; transform: translateX(-50%); }
+        #crossmark::after { width: 100%; height: 2px; top: 50%; transform: translateY(-50%); }
+
+        .leaflet-popup-content-wrapper {
+            border-radius: 16px !important; 
+            background-color: rgba(255, 255, 255, 0.92) !important; 
+            backdrop-filter: blur(10px) !important; 
+            -webkit-backdrop-filter: blur(10px) !important;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.25) !important;
+            border: 1px solid rgba(255, 255, 255, 0.6) !important;
+            padding: 0 !important; 
+        }
+        .leaflet-popup-content { 
+            margin: 0 !important; 
+            width: auto !important; 
+            font-family: 'Poppins', sans-serif;
+        }
+        .leaflet-popup-close-button {
+            color: #555 !important;
+            padding: 10px 10px 0 0 !important; 
+            font-size: 20px !important;
+        }
+         .leaflet-popup-close-button:hover {
+            color: #E02F2F !important;
+        }
+
+        .placed-heart-popup {
+            padding: 15px 20px;
+            min-width: 200px;
+            max-width: 280px;
+            box-sizing: border-box;
+        }
+        .placed-heart-popup .heart-type-name {
+            font-size: 1.2em;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+        .placed-heart-popup .heart-type-name .placed-heart-emoji {
+            font-size: 1.4em; 
+            margin-right: 8px;
+            line-height: 1;
+        }
+        .placed-heart-popup .heart-message {
+            font-size: 1em;
+            font-style: italic;
+            color: #444;
+            margin-bottom: 12px;
+            padding: 10px;
+            background-color: #f7f7f7;
+            border-radius: 6px;
+            border-left: 4px solid #E02F2F;
+            line-height: 1.4;
+        }
+        .placed-heart-popup .heart-timestamp,
+        .placed-heart-popup .heart-location-display { /* Renamed for clarity */
+            font-size: 0.8em;
+            color: #666;
+            line-height: 1.5;
+        }
+         .placed-heart-popup .heart-location-display {
+            margin-top: 4px;
+            display: flex;
+            align-items: center;
+        }
+        .placed-heart-popup .heart-location-display img.flag-emoji { /* Updated class name */
+            width: 18px; 
+            height: auto;
+            margin-right: 6px;
+            border-radius: 2px;
+            box-shadow: 0 0 2px rgba(0,0,0,0.3);
+        }
+        
+        /* Styles for User Location Popup */
+        .user-location-popup {
+            padding: 15px 20px;
+            min-width: 180px;
+            max-width: 250px;
+            text-align: center;
+            box-sizing: border-box;
+        }
+        .user-location-popup .popup-title {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .user-location-popup .popup-title .user-emoji {
+            font-size: 1.4em;
+            margin-right: 8px;
+        }
+        .user-location-popup .accuracy-info {
+            font-size: 0.9em;
+            color: #555;
+        }
+        .user-location-popup .accuracy-info strong {
+            color: #E02F2F;
+            font-weight: 600;
+        }
+
+        .cluster-heart-icon {
+            background: none !important; display: flex; align-items: center; justify-content: center;
+            position: relative; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            border-radius: 50%;
+        }
+        .cluster-heart-icon .heart-emoji-cluster {
+            position: absolute; line-height: 1; z-index: 1; filter: drop-shadow(0 0 2px rgba(0,0,0,0.5));
+        }
+        .cluster-heart-icon span {
+            position: relative; z-index: 2; font-weight: 700; pointer-events: none;
+            display: flex; align-items: center; justify-content: center; height: 100%; width: 100%;
+            color: var(--cluster-text-color, white); text-shadow: var(--cluster-text-shadow, 0 0 3px rgba(0,0,0,0.7));
+        }
+        .cluster-heart-icon-small { width: 50px; height: 50px; }
+        .cluster-heart-icon-small .heart-emoji-cluster { font-size: 40px; }
+        .cluster-heart-icon-small span { font-size: 14px; }
+        .cluster-heart-icon-medium { width: 60px; height: 60px; }
+        .cluster-heart-icon-medium .heart-emoji-cluster { font-size: 50px; }
+        .cluster-heart-icon-medium span { font-size: 16px; }
+        .cluster-heart-icon-large { width: 70px; height: 70px; }
+        .cluster-heart-icon-large .heart-emoji-cluster { font-size: 60px; }
+        .cluster-heart-icon-large span { font-size: 18px; }
+
+        .marketing-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: radial-gradient(circle, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.6));
+            display: flex; justify-content: center;
+            align-items: center; z-index: 1500; pointer-events: all;
+            opacity: 1; transition: opacity 0.5s ease;
+        }
+        .marketing-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        .marketing-message-box {
+            background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px); padding: 40px; border-radius: 20px;
+            box-shadow: 0 15px 50px rgba(0,0,0,0.4); text-align: center; max-width: 650px;
+            transform: scale(1);
+        }
+        .marketing-message-box h1 {
+            font-size: 3.5em; color: #E02F2F; margin-bottom: 20px;
+            font-weight: 800; line-height: 1.1; text-shadow: 2px 2px 5px rgba(0,0,0,0.1);
+        }
+        .marketing-message-box p {
+            font-size: 1.3em; color: #444; margin-bottom: 40px;
+            line-height: 1.7; font-weight: 500;
+        }
+        .marketing-message-box button {
+            background-color: #E02F2F; color: white; padding: 18px 40px;
+            border: none; border-radius: 12px; font-size: 1.6em; font-weight: 800;
+            cursor: pointer; transition: background-color 0.2s, transform 0.2s, box-shadow 0.2s;
+            animation: pulse 2.5s infinite ease-in-out;
+        }
+        .marketing-message-box button:hover {
+            background-color: #c92c2c; transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(224, 47, 47, 0.6);
+            animation-play-state: paused;
+        }
+        
+        /* Heart Selection Popup - Base (Mobile First) */
+        .heart-selection-popup {
+            padding: 15px; 
+            text-align: center; 
+            box-sizing: border-box;
+        }
+        .heart-selection-popup .popup-title {
+            margin-top: 0; margin-bottom: 15px; font-size: 1.4em; 
+            font-weight: 700; color: #222;
+        }
+        .heart-selection-popup-container { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 10px; 
+            align-items: center; 
+        }
+        .heart-option-card {
+            background: #fff; border: 2px solid #e0e0e0; border-radius: 12px;
+            padding: 15px; 
+            cursor: pointer; transition: all 0.2s ease-in-out;
+            width: 95%; 
+            min-width: 180px; 
+            display: flex; flex-direction: column;
+            align-items: center; text-align: center;
+            box-sizing: border-box;
+        }
+        .heart-option-card.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+        .heart-option-card:hover:not(.disabled) {
+            border-color: #E02F2F; transform: scale(1.03); 
+            box-shadow: 0 3px 15px rgba(0,0,0,0.1);
+        }
+        .heart-option-card .heart-emoji-icon {
+            font-size: 40px; 
+            line-height: 1; margin-bottom: 8px;
+            filter: drop-shadow(0 1px 2px rgba(0,0,0,0.2));
+        }
+        .heart-option-card .heart-name {
+            font-weight: 600; font-size: 1.1em; 
+            color: #333; margin-bottom: 6px;
+        }
+        .heart-option-card .heart-features {
+            list-style: none; padding: 0; margin: 0 0 10px 0; font-size: 0.75em; 
+            color: #555; text-align: left; width: 100%;
+        }
+        .heart-option-card .heart-features li {
+            margin-bottom: 4px; display: flex; align-items: center;
+        }
+        .heart-option-card .heart-features .fa-check,
+        .heart-option-card .heart-features .fa-times {
+            margin-right: 6px; font-size: 0.8em; width: 12px; 
+        }
+        .heart-option-card .heart-features .fa-check { color: #28a745; }
+        .heart-option-card .heart-features .fa-times { color: #999; }
+        .heart-option-card .heart-price {
+            font-size: 1.2em; 
+            font-weight: 700; color: #E02F2F;
+            margin-top: auto;
+        }
+
+        .terms-container {
+            margin-top: 12px; 
+            padding-top: 8px; 
+            border-top: 1px solid #ddd;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 0.7em; 
+            color: #666;
+        }
+        .terms-container input[type="checkbox"] {
+            margin-right: 5px;
+            accent-color: #E02F2F;
+            transform: scale(1); 
+        }
+        .terms-container a {
+            color: #E02F2F;
+            text-decoration: none;
+        }
+        .terms-container a:hover {
+            text-decoration: underline;
+        }
+        
+        /* Desktop Styles for Heart Selection Popup */
+        @media (min-width: 790px) { 
+            .heart-selection-popup {
+                padding: 25px;
+            }
+            .heart-selection-popup .popup-title {
+                margin-bottom: 25px; font-size: 1.8em; 
+            }
+            .heart-selection-popup-container {
+                flex-direction: row; 
+                gap: 25px;
+                justify-content: center;
+            }
+            .heart-option-card {
+                width: 220px; 
+                min-width: 220px;
+                padding: 25px; 
+            }
+            .heart-option-card .heart-emoji-icon {
+                font-size: 60px; 
+                margin-bottom: 15px;
+            }
+            .heart-option-card .heart-name {
+                font-size: 1.4em; 
+                margin-bottom: 18px;
+            }
+            .heart-option-card .heart-features {
+                font-size: 1em; 
+                 margin-bottom: 18px;
+            }
+             .heart-option-card .heart-features li {
+                margin-bottom: 8px;
+            }
+            .heart-option-card .heart-features .fa-check,
+            .heart-option-card .heart-features .fa-times {
+                margin-right: 10px; font-size: 0.9em; width: 16px; 
+            }
+            .heart-option-card .heart-price {
+                font-size: 1.8em; 
+            }
+            .terms-container {
+                margin-top: 20px; 
+                padding-top: 15px; 
+                font-size: 0.9em; 
+            }
+             .terms-container input[type="checkbox"] {
+                transform: scale(1.2); 
+            }
+        }
+        @media (max-height: 600px), (max-width: 768px) { 
+            .leaflet-popup-content-wrapper {
+                max-height: 80vh; 
+                overflow-y: auto;
+            }
+        }
+
+        .message-input-overlay {
+            position: fixed; 
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.4); display: flex; justify-content: center;
+            align-items: center; z-index: 1600; pointer-events: all;
+            opacity: 1; transition: opacity 0.3s ease;
+        }
+        .message-input-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        .message-input-box {
+            background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px); padding: 35px; border-radius: 18px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3); text-align: center; max-width: 450px;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            width: 90%;
+            box-sizing: border-box;
+        }
+        .message-input-box h2 {
+            font-size: 1.8em; color: #333; margin-top: 0; margin-bottom: 15px;
+            font-weight: 700;
+        }
+        .message-input-box p {
+            font-size: 1.1em; color: #555; margin-bottom: 25px;
+            line-height: 1.5;
+        }
+        .message-input-box textarea {
+            width: calc(100% - 40px); height: 80px; padding: 15px; font-family: 'Poppins', sans-serif;
+            font-size: 1.2em; border-radius: 10px; border: 2px solid #ddd;
+            margin-bottom: 10px; resize: none; transition: border-color 0.2s;
+        }
+        .message-input-box textarea:focus {
+            outline: none; border-color: #E02F2F;
+        }
+        .message-input-box .char-counter {
+            text-align: right;
+            font-size: 0.9em;
+            color: #777;
+            margin-bottom: 25px;
+            padding-right: 5px;
+        }
+        .message-input-box button {
+            background-color: #E02F2F; color: white; padding: 15px 30px;
+            border: none; border-radius: 10px; font-size: 1.2em; font-weight: 700;
+            cursor: pointer; transition: all 0.2s;
+            width: 100%;
+            box-shadow: 0 5px 15px rgba(224, 47, 47, 0.4);
+        }
+        .message-input-box button:hover {
+            background-color: #c92c2c; transform: translateY(-2px);
+            box-shadow: 0 7px 20px rgba(224, 47, 47, 0.5);
+        }
+        .message-input-box .skip-button {
+            background: none;
+            box-shadow: none;
+            color: #666;
+            margin-top: 15px;
+            font-weight: 500;
+            font-size: 1em;
+        }
+        .message-input-box .skip-button:hover {
+            background: #f0f0f0;
+            transform: none;
+        }
+        
+        #top-right-controls, #bottom-left-controls, #bottom-right-controls {
+            position: fixed; 
+            z-index: 1001;
+        }
+
+        @media (min-width: 769px) { /* Desktop Control Positions */
+            #top-right-controls { top: 50px; right: 20px; }
+            #bottom-left-controls { bottom: 20px; left: 20px; }
+            #bottom-right-controls { bottom: 20px; right: 10px; }
+        }
+
+        #bottom-right-controls { 
+            display: flex;
+            flex-direction: column; 
+        }
+
+        #mapToggleBtn { 
+            background-color: rgba(23, 23, 23, 0.8) !important;
+            backdrop-filter: blur(10px) !important;
+            -webkit-backdrop-filter: blur(10px) !important;
+            color: #fff !important;
+            width: 44px !important;
+            height: 44px !important;
+            font-weight: 700 !important;
+            text-align: center !important;
+            cursor: pointer !important;
+            transition: all 0.2s ease !important;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3) !important;
+            border: 1px solid rgba(255,255,255,0.1) !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            font-size: 1.8em !important;
+            border-radius: 12px !important; 
+        }
+        #mapToggleBtn:hover {
+            transform: translateY(-1px);
+            background-color: #E02F2F !important;
+            border-color: #E02F2F !important;
+        }
+        .leaflet-control-zoom { 
+            display: none !important; /* Hides Leaflet zoom controls */
+        }
+
+        #stats-window {
+            background: rgba(23, 23, 23, 0.8);
+            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            padding: 8px 10px; 
+            border-radius: 10px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            display: flex;
+            gap: 10px; 
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 6px; 
+            color: #fff;
+        }
+        .stat-item i, .stat-item .stat-emoji {
+            font-size: 1.3em; 
+            opacity: 0.8;
+            filter: drop-shadow(0 0 3px rgba(0,0,0,0.5));
+        }
+        .stat-item .stat-emoji {
+            line-height: 1;
+        }
+        .stat-item .stat-number {
+            font-size: 1em; 
+            font-weight: 600;
+        }
+        
+        #getLocationBtn {
+            background-color: rgba(23, 23, 23, 0.8);
+            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            color: #fff;
+            padding: 10px 15px; 
+            border-radius: 10px; 
+            font-size: 0.9em; 
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        #getLocationBtn:hover {
+            transform: translateY(-2px);
+            background-color: #E02F2F;
+            border-color: #E02F2F;
+        }
+        #getLocationBtn i {
+            font-size: 1.1em; 
+        }
+        
+        #news-ticker {
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%;
+            padding-top: env(safe-area-inset-top, 0px); 
+            background-color: rgba(0, 0, 0, 0.6); backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px); color: white;
+            z-index: 1002; overflow: hidden; height: auto; min-height: 30px; 
+            display: flex; align-items: center;
+        }
+        #news-ticker .ticker-item {
+            display: flex; align-items: center; padding: 5px 10px; 
+            font-size: 0.85em; 
+            white-space: normal; 
+            line-height: 1.3;
+            opacity: 0;
+            position: absolute; transition: opacity 0.5s ease-in-out;
+        }
+        #news-ticker .ticker-item.visible { opacity: 1; }
+        .ticker-item .flag-emoji {
+            margin-left: 8px;
+            vertical-align: middle;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 3px;
+        }
+
+        /* Mobile Specific Adjustments */
+        @media (max-width: 768px) {
+            .marketing-message-box h1 { font-size: 2.5em; } 
+            .marketing-message-box p { font-size: 1.1em; margin-bottom: 25px; } 
+            .marketing-message-box button { font-size: 1.2em; padding: 14px 28px; } 
+            
+            #top-right-controls { 
+                top: calc(env(safe-area-inset-top, 0px) + 35px + 10px); /* News ticker height (~35px) + safe area + margin */
+                right: 10px; 
+            } 
+            #bottom-left-controls {
+                bottom: calc(env(safe-area-inset-bottom, 0px) + 10px);
+                left: calc(env(safe-area-inset-left, 0px) + 10px);
+            }
+            #bottom-right-controls { /* This positions mapToggleBtn */
+                bottom: calc(env(safe-area-inset-bottom, 0px) + 10px);
+                right: calc(env(safe-area-inset-right, 0px) + 10px);
+            } 
+        }
+
+        @media (max-width: 480px) { /* Smallest Mobile Screens */
+            .marketing-message-box { padding: 20px; } 
+            .marketing-message-box h1 { font-size: 2em; } 
+            .marketing-message-box p { font-size: 0.95em; } 
+            .marketing-message-box button { font-size: 1em; padding: 10px 20px; } 
+            
+            .message-input-box { padding: 20px; width: calc(100% - 30px); }
+            .message-input-box h2 { font-size: 1.3em; }
+            .message-input-box p { font-size: 0.9em; }
+            .message-input-box textarea { font-size: 0.95em; height: 60px; }
+
+            #top-right-controls { 
+                top: calc(env(safe-area-inset-top, 0px) + 30px + 5px); /* News ticker height (~30px) + safe area + margin */
+                right: 5px; 
+            }
+            #bottom-left-controls {
+                bottom: calc(env(safe-area-inset-bottom, 0px) + 5px);
+                left: calc(env(safe-area-inset-left, 0px) + 5px);
+            }
+            #bottom-right-controls { /* This positions mapToggleBtn */
+                bottom: calc(env(safe-area-inset-bottom, 0px) + 5px); 
+                right: calc(env(safe-area-inset-right, 0px) + 5px);
+            } 
+            #mapToggleBtn { 
+                width: 38px !important; 
+                height: 38px !important;
+                font-size: 1.5em !important;
+            }
+            #stats-window { 
+                gap: 5px; padding: 6px 8px; 
+                flex-wrap: nowrap; 
+                overflow-x: auto; 
+                max-width: calc(100vw - 10px); 
+            }
+            .stat-item { flex-shrink: 0; } 
+            .stat-item .stat-emoji, .stat-item i { font-size: 1.1em; }
+            .stat-item .stat-number { font-size: 0.8em; }
+            #getLocationBtn { padding: 8px 12px; font-size: 0.85em; }
+            #news-ticker .ticker-item { font-size: 0.75em; line-height: 1.2;}
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <div id="news-ticker"></div>
+    <div id="top-right-controls">
+        <button id="getLocationBtn">
+            <i class="fas fa-map-marker-alt"></i>
+            <span>Explore Your Area</span>
+        </button>
+    </div>
+    <div id="bottom-left-controls">
+        <div id="stats-window">
+            <div class="stat-item" title="Hearts">
+                <span class="stat-emoji">❤️</span>
+                <span id="stats-red" class="stat-number">0</span>
+            </div>
+            <div class="stat-item" title="Silver Hearts">
+                <span class="stat-emoji">🤍</span>
+                <span id="stats-silver" class="stat-number">0</span>
+            </div>
+            <div class="stat-item" title="Gold Hearts">
+                <span class="stat-emoji">💛</span>
+                <span id="stats-yellow" class="stat-number">0</span>
+            </div>
+            <div class="stat-item" title="Countries with Hearts">
+                <i class="fas fa-globe-americas"></i>
+                <span id="stats-countries" class="stat-number">0</span>
+            </div>
+        </div>
+    </div>
+    <div id="bottom-right-controls">
+        <button id="mapToggleBtn" title="Toggle Map Style">🗺️</button>
+    </div>
+    <div id="crossmark-container">
+        <div id="crossmark"></div>
+    </div>
+    <div class="marketing-overlay" id="marketingOverlay">
+        <div class="marketing-message-box">
+            <h1>ilovehere</h1>
+            <p>The world is full of places that touch our souls. A childhood home, the spot of a first kiss, a breathtaking view, or a place of quiet remembrance. Be the first to leave a heart and create a digital landmark of your most cherished memories for the world to see. What place do you love?</p>
+            <button id="getStartedBtn">Share a Memory</button>
+        </div>
+    </div>
+    <div class="message-input-overlay hidden" id="messageInputOverlay">
+        <div class="message-input-box">
+            <h2 id="messageModalTitle">Add a Message to Your Heart</h2>
+            <p id="messageModalDescription">Enter a short message to display on the map.</p>
+            <textarea id="heartMessageInput" placeholder="Hello world..."></textarea>
+            <div id="charCounter" class="char-counter"></div>
+            <button id="confirmMessageBtn">Confirm Message</button>
+            <button id="skipMessageBtn" class="skip-button">Skip for now</button>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+
+    <script>
+        // --- Global State ---
+        let currentMapClickLocation = null;
+        let heartSelectionPopup = null;
+        let tickerInterval = null;
+        let pendingHeartData = null; 
+        window.currentAllHeartsData = []; // To store hearts fetched from server
+
+        // --- UI Elements ---
+        const getLocationBtn = document.getElementById('getLocationBtn');
+        const mapElement = document.getElementById('map');
+        const crossmarkContainer = document.getElementById('crossmark-container');
+        const marketingOverlay = document.getElementById('marketingOverlay');
+        const getStartedBtn = document.getElementById('getStartedBtn');
+        const newsTicker = document.getElementById('news-ticker');
+        const messageInputOverlay = document.getElementById('messageInputOverlay');
+        const messageModalTitle = document.getElementById('messageModalTitle');
+        const messageModalDescription = document.getElementById('messageModalDescription');
+        const heartMessageInput = document.getElementById('heartMessageInput');
+        const confirmMessageBtn = document.getElementById('confirmMessageBtn');
+        const skipMessageBtn = document.getElementById('skipMessageBtn');
+        const charCounter = document.getElementById('charCounter');
+        const mapToggleBtn = document.getElementById('mapToggleBtn');
+
+        // --- Heart Definitions ---
+        const HEART_DEFINITIONS = {
+            redHeart: { id: 'redHeart', name: 'Heart', emoji: '❤️', price: 1.00, canAddMessage: false, iconSize: [35, 35], clusterTextColor: '#fff', clusterTextShadow: '1px 1px 3px rgba(0,0,0,0.7)' },
+            silverHeart: { id: 'silverHeart', name: 'Silver Heart', emoji: '🤍', price: 3.00, canAddMessage: true, iconSize: [35, 35], maxLength: 10, clusterTextColor: '#333', clusterTextShadow: '1px 1px 3px rgba(200,200,200,0.7)' },
+            yellowHeart: { id: 'yellowHeart', name: 'Gold Heart', emoji: '💛', price: 5.00, canAddMessage: true, iconSize: [35, 35], maxLength: 25, clusterTextColor: '#333', clusterTextShadow: '1px 1px 3px rgba(255,215,0,0.7)' }
+        };
+
+        // --- Map Setup ---
+        const initialLat = 20;
+        const initialLng = -30;
+        const initialZoom = 3;
+
+        const baseLayers = {
+            "Aerial": L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                attribution: '&copy; <a href="https://www.esri.com/">Esri</a> & contributors'
+            }),
+            "Streets": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            })
+        };
+        let currentLayer = "Aerial";
+
+        const southWest = L.latLng(-85.0511, -180);
+        const northEast = L.latLng(85.0511, 180);
+        const bounds = L.latLngBounds(southWest, northEast);
+
+        const map = L.map('map', {
+            minZoom: initialZoom,
+            maxZoom: 18, 
+            worldCopyJump: true,
+            maxBounds: bounds,
+            maxBoundsViscosity: 1.0,
+            zoomControl: false // Zoom control explicitly hidden
+        });
+        
+        baseLayers[currentLayer].addTo(map);
+        map.setView([initialLat, initialLng], initialZoom);
+
+        const createClusterGroup = (heartDef) => {
+            return L.markerClusterGroup({
+                iconCreateFunction: function(cluster) {
+                    const childCount = cluster.getChildCount();
+                    let c = ' cluster-heart-icon-';
+                    c += childCount < 10 ? 'small' : childCount < 100 ? 'medium' : 'large';
+                    const size = childCount < 10 ? 50 : childCount < 100 ? 60 : 70;
+                    const html = `<span class="heart-emoji-cluster">${heartDef.emoji}</span><span style="color:${heartDef.clusterTextColor}; text-shadow:${heartDef.clusterTextShadow};">${childCount}</span>`;
+                    return L.divIcon({ html: html, className: 'cluster-heart-icon' + c, iconSize: [size, size] });
+                }
+            });
+        };
+
+        let redHeartMarkers = createClusterGroup(HEART_DEFINITIONS.redHeart);
+        let silverHeartMarkers = createClusterGroup(HEART_DEFINITIONS.silverHeart);
+        let yellowHeartMarkers = createClusterGroup(HEART_DEFINITIONS.yellowHeart);
+        map.addLayer(redHeartMarkers);
+        map.addLayer(silverHeartMarkers);
+        map.addLayer(yellowHeartMarkers);
+
+        let userLocationMarker = null;
+        let userAccuracyCircle = null;
+
+        mapToggleBtn.addEventListener('click', () => {
+            map.removeLayer(baseLayers[currentLayer]);
+            currentLayer = (currentLayer === "Aerial") ? "Streets" : "Aerial";
+            baseLayers[currentLayer].addTo(map);
+        });
+        
+        getLocationBtn.addEventListener('click', () => {
+            if ("geolocation" in navigator) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const { latitude: lat, longitude: lng, accuracy } = position.coords;
+                        map.setView([lat, lng], 16);
+                        
+                        const userLocationIcon = L.divIcon({
+                            className: 'leaflet-div-icon',
+                            html: `<span class="user-location-emoji-marker">🚶</span>`,
+                            iconSize: [35, 35],
+                            iconAnchor: [17, 35]
+                        });
+
+                        const circleOptions = {
+                            color: '#E02F2F',
+                            fillColor: '#E02F2F',
+                            fillOpacity: 0.15,
+                            weight: 2,
+                            opacity: 0.7
+                        };
+                        
+                        const popupContentHTML = `
+                            <div class="user-location-popup">
+                                <div class="popup-title"><span class="user-emoji">🚶</span> Your Location</div>
+                                <div class="accuracy-info">Accuracy: <strong>${accuracy.toFixed(0)} meters</strong></div>
+                            </div>`;
+
+                        if (userLocationMarker) {
+                            userLocationMarker.setLatLng([lat, lng]).getPopup().setContent(popupContentHTML);
+                            userAccuracyCircle.setLatLng([lat, lng]).setRadius(accuracy);
+                        } else {
+                            userLocationMarker = L.marker([lat, lng], { icon: userLocationIcon })
+                                .addTo(map)
+                                .bindPopup(popupContentHTML);
+                            userAccuracyCircle = L.circle([lat, lng], accuracy, circleOptions).addTo(map);
+                        }
+                        
+                        userLocationMarker.openPopup();
+                    },
+                    (error) => { alert('Error getting your location. Please enable location services.'); console.error("Geolocation Error:", error); },
+                    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+                );
+            } else { alert("Geolocation is not supported by your browser."); }
+        });
+
+        getStartedBtn.addEventListener('click', () => {
+            marketingOverlay.classList.add('hidden');
+        });
+
+        map.on('click', (e) => {
+            if (!marketingOverlay.classList.contains('hidden')) return;
+            
+            currentMapClickLocation = e.latlng;
+            if (heartSelectionPopup) map.closePopup(heartSelectionPopup);
+
+            const pixelPoint = map.latLngToContainerPoint(e.latlng);
+            crossmarkContainer.style.setProperty('--crossmark-x', `${pixelPoint.x}px`);
+            crossmarkContainer.style.setProperty('--crossmark-y', `${pixelPoint.y}px`);
+            crossmarkContainer.style.display = 'block';
+
+            const popupEl = document.createElement('div'); 
+            popupEl.className = 'heart-selection-popup';
+            popupEl.innerHTML = `
+                <h3 class="popup-title">Choose a Heart</h3>
+                <div class="heart-selection-popup-container">
+                    <div class="heart-option-card disabled" data-heart-id="redHeart">
+                        <span class="heart-emoji-icon">${HEART_DEFINITIONS.redHeart.emoji}</span>
+                        <span class="heart-name">${HEART_DEFINITIONS.redHeart.name}</span>
+                        <ul class="heart-features">
+                            <li><i class="fas fa-check"></i> Standard placement</li>
+                            <li><i class="fas fa-times"></i> No custom message</li>
+                        </ul>
+                        <div class="heart-price">$${HEART_DEFINITIONS.redHeart.price.toFixed(2)}</div>
+                    </div>
+                    <div class="heart-option-card disabled" data-heart-id="silverHeart">
+                        <span class="heart-emoji-icon">${HEART_DEFINITIONS.silverHeart.emoji}</span>
+                        <span class="heart-name">${HEART_DEFINITIONS.silverHeart.name}</span>
+                        <ul class="heart-features">
+                            <li><i class="fas fa-check"></i> Stylish silver heart</li>
+                            <li><i class="fas fa-check"></i> ${HEART_DEFINITIONS.silverHeart.maxLength} character message</li>
+                        </ul>
+                        <div class="heart-price">$${HEART_DEFINITIONS.silverHeart.price.toFixed(2)}</div>
+                    </div>
+                    <div class="heart-option-card disabled" data-heart-id="yellowHeart">
+                        <span class="heart-emoji-icon">${HEART_DEFINITIONS.yellowHeart.emoji}</span>
+                        <span class="heart-name">${HEART_DEFINITIONS.yellowHeart.name}</span>
+                        <ul class="heart-features">
+                            <li><i class="fas fa-check"></i> Premium gold heart</li>
+                            <li><i class="fas fa-check"></i> ${HEART_DEFINITIONS.yellowHeart.maxLength} character message</li>
+                        </ul>
+                        <div class="heart-price">$${HEART_DEFINITIONS.yellowHeart.price.toFixed(2)}</div>
+                    </div>
+                </div>
+                <div class="terms-container">
+                    <input type="checkbox" id="termsCheckbox">
+                    <label for="termsCheckbox">I accept the <a href="https://www.google.com/search?q=terms+and+conditions" target="_blank" rel="noopener noreferrer">Terms and Conditions</a></label>
+                </div>`;
+
+            const heartOptions = popupEl.querySelectorAll('.heart-option-card');
+            const termsCheckbox = popupEl.querySelector('#termsCheckbox');
+
+            termsCheckbox.addEventListener('change', () => {
+                if (termsCheckbox.checked) {
+                    heartOptions.forEach(card => card.classList.remove('disabled'));
+                } else {
+                    heartOptions.forEach(card => card.classList.add('disabled'));
+                }
+            });
+
+            heartOptions.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const selectedHeartId = btn.dataset.heartId;
+                    const heartDef = HEART_DEFINITIONS[selectedHeartId];
+                    
+                    if (heartSelectionPopup) map.closePopup(heartSelectionPopup);
+                    
+                    // For now, we skip actual payment and proceed
+                    // window.open('https://stripe.com', '_blank'); 
+
+                    if (heartDef.canAddMessage) {
+                        pendingHeartData = { location: currentMapClickLocation, heartId: selectedHeartId };
+                        messageModalTitle.textContent = `Add a Message to Your ${heartDef.name}`;
+                        messageModalDescription.textContent = `Enter a short message (max ${heartDef.maxLength} characters).`
+                        heartMessageInput.maxLength = heartDef.maxLength;
+                        charCounter.textContent = `${heartDef.maxLength}/${heartDef.maxLength}`;
+                        messageInputOverlay.classList.remove('hidden');
+                        heartMessageInput.focus();
+                    } else {
+                        placeHeart(currentMapClickLocation, '', selectedHeartId);
+                    }
+                });
+            });
+            
+            let panPadding = window.innerWidth <= 480 ? L.point(10, 10) : (window.innerWidth <= 768 ? L.point(25,25) : L.point(50, 50));
+            heartSelectionPopup = L.popup({ 
+                closeButton: true, 
+                autoPanPadding: panPadding,
+            }).setLatLng(e.latlng).setContent(popupEl).openOn(map);
+            heartSelectionPopup.on('remove', () => { crossmarkContainer.style.display = 'none'; });
+        });
+        
+        heartMessageInput.addEventListener('input', () => {
+            const remaining = heartMessageInput.maxLength - heartMessageInput.value.length;
+            charCounter.textContent = `${remaining}/${heartMessageInput.maxLength}`;
+        });
+
+        function closeMessageModal() {
+            if (!pendingHeartData) return;
+            const heartDef = HEART_DEFINITIONS[pendingHeartData.heartId];
+            messageInputOverlay.classList.add('hidden');
+            heartMessageInput.value = '';
+            if (heartDef && heartDef.maxLength) { 
+                 charCounter.textContent = `${heartDef.maxLength}/${heartDef.maxLength}`;
+            } else if (heartDef) { 
+                 charCounter.textContent = ''; 
+            }
+            pendingHeartData = null;
+        }
+
+        confirmMessageBtn.addEventListener('click', () => {
+            if (!pendingHeartData) return;
+            const message = heartMessageInput.value;
+            placeHeart(pendingHeartData.location, message, pendingHeartData.heartId);
+            closeMessageModal();
+        });
+
+        skipMessageBtn.addEventListener('click', () => {
+            if (!pendingHeartData) return;
+            placeHeart(pendingHeartData.location, '', pendingHeartData.heartId);
+            closeMessageModal();
+        });
+
+        function createHeartMarkerIcon(heartData) {
+            const heartDef = HEART_DEFINITIONS[heartData.type];
+            const iconSize = heartDef.iconSize[0];
+            return L.divIcon({
+                className: 'leaflet-div-icon',
+                html: `<span class="heart-emoji-marker">${heartDef.emoji}</span>`,
+                iconSize: [iconSize, iconSize],
+                iconAnchor: [iconSize / 2, iconSize],
+                popupAnchor: [0, -iconSize + 5]
+            });
+        }
+        
+        // getCountryFromLatLng is now handled by the server.
+        // We keep getFlagHTML as it's used by the news ticker (and potentially popups).
+        function getFlagHTML(countryCode) {
+            if (!countryCode || countryCode === 'XX') {
+                return '<span class="flag-emoji">🏳️</span>'; // Default or unknown flag
+            }
+            const code = countryCode.toLowerCase();
+            // Using a reliable CDN for flags
+            return `<img class="flag-emoji" src="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.5.0/flags/4x3/${code}.svg"
+                         width="20" alt="${countryCode}" style="border: 1px solid #ccc; border-radius:2px; object-fit:cover; height:13px;">`;
+        }
+
+        async function placeHeart(location, message = '', heartId) {
+            if (!location || !heartId) {
+                console.error('Location or heartId missing for placeHeart');
+                return;
+            }
+
+            const heartDef = HEART_DEFINITIONS[heartId];
+            if (!heartDef) {
+                console.error('Invalid heartId:', heartId);
+                return;
+            }
+
+            const heartDataForServer = {
+                type: heartId,
+                latitude: location.lat,
+                longitude: location.lng,
+                message: message.trim().substring(0, heartDef.canAddMessage ? heartDef.maxLength : 0),
+            };
+
+            try {
+                const response = await fetch('/api/hearts', { // Ensure this matches your server port
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(heartDataForServer),
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({ error: "Server error with non-JSON response" }));
+                    throw new Error(errorData.error || `Server responded with ${response.status}`);
+                }
+
+                const newHeartFromServer = await response.json();
+                console.log('Heart placed via server:', newHeartFromServer);
+                crossmarkContainer.style.display = 'none';
+                loadHeartsOnMap(); // This will fetch all hearts including the new one
+
+            } catch (error) {
+                console.error('Failed to place heart:', error);
+                alert(`Error placing heart: ${error.message}. Please try again.`);
+                crossmarkContainer.style.display = 'none';
+            }
+        }
+
+        async function loadHeartsOnMap() {
+            redHeartMarkers.clearLayers();
+            silverHeartMarkers.clearLayers();
+            yellowHeartMarkers.clearLayers();
+
+            try {
+                const response = await fetch('/api/hearts'); // Ensure this matches your server port
+                if (!response.ok) {
+                    throw new Error(`Server responded with ${response.status}`);
+                }
+                const allHeartsData = await response.json();
+                window.currentAllHeartsData = allHeartsData; // Make data globally accessible
+
+                allHeartsData.forEach(heart => { // heart object comes from server
+                    const heartDef = HEART_DEFINITIONS[heart.type];
+                    if (!heartDef) {
+                        console.warn("Unknown heart type from server:", heart.type);
+                        return;
+                    }
+
+                    const icon = createHeartMarkerIcon(heart); // Pass the whole heart object
+                    // Server provides latitude and longitude directly
+                    const marker = L.marker([heart.latitude, heart.longitude], { icon: icon }); 
+                    
+                    let messageContent = heart.message ? `<div class="heart-message">"${heart.message}"</div>` : '';
+                    let locationDisplay = '';
+                    if (heart.countryName && heart.countryCode) {
+                        locationDisplay = `<div class="heart-location-display">${getFlagHTML(heart.countryCode)} ${heart.countryName}</div>`;
+                    }
+
+                    const popupContentHTML = `
+                        <div class="placed-heart-popup">
+                            <div class="heart-type-name"><span class="placed-heart-emoji">${heartDef.emoji}</span> ${heartDef.name}</div>
+                            ${messageContent}
+                            <div class="heart-timestamp">Placed: ${new Date(heart.timestamp).toLocaleString([], {year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit'})}</div>
+                            ${locationDisplay}
+                        </div>`;
+                    marker.bindPopup(popupContentHTML);
+                    
+                    let targetGroup;
+                    switch (heart.type) {
+                        case 'redHeart': targetGroup = redHeartMarkers; break;
+                        case 'silverHeart': targetGroup = silverHeartMarkers; break;
+                        case 'yellowHeart': targetGroup = yellowHeartMarkers; break;
+                        default: return;
+                    }
+                    targetGroup.addLayer(marker);
+                });
+
+                updateStats(); 
+                updateNewsTicker(); 
+
+            } catch (error) {
+                console.error('Failed to load hearts:', error);
+                // Consider showing a user-friendly error message here
+            }
+        }
+        
+        function updateStats() {
+            const allHearts = window.currentAllHeartsData || []; // Use data fetched from server
+            const redHearts = allHearts.filter(h => h.type === 'redHeart').length;
+            const silverHearts = allHearts.filter(h => h.type === 'silverHeart').length;
+            const yellowHearts = allHearts.filter(h => h.type === 'yellowHeart').length;
+            const countries = new Set(allHearts.map(h => h.countryCode).filter(code => code && code !== 'XX')).size; // Count unique, valid country codes
+            
+            document.getElementById('stats-red').textContent = redHearts;
+            document.getElementById('stats-silver').textContent = silverHearts;
+            document.getElementById('stats-yellow').textContent = yellowHearts;
+            document.getElementById('stats-countries').textContent = countries;
+        }
+        
+        function updateNewsTicker() {
+            if (tickerInterval) clearInterval(tickerInterval);
+            const allHearts = window.currentAllHeartsData || []; // Use data fetched from server
+            const recentHearts = allHearts.slice(0, 10); // Assumes server sorts by newest first
+            
+            if (recentHearts.length === 0) {
+                newsTicker.innerHTML = `<div class="ticker-item visible">Be the first to place a heart on the map! ❤️</div>`;
+                return;
+            }
+            
+            newsTicker.innerHTML = ''; // Clear previous items
+            recentHearts.forEach(heart => { // heart object from server
+                const heartDef = HEART_DEFINITIONS[heart.type];
+                if (!heartDef) return;
+
+                const flagHTML = getFlagHTML(heart.countryCode); // Use countryCode from server
+                const item = document.createElement('div');
+                item.className = 'ticker-item';
+                
+                let messageText;
+                let locationText = heart.countryName || 'an unknown location';
+                if (heart.countryCode && heart.countryCode !== 'XX') {
+                     locationText = `${flagHTML} ${locationText}`;
+                } else {
+                     locationText = `${flagHTML} ${locationText}`; // Still show default flag for open sea/unknown
+                }
+
+
+                if (heartDef.canAddMessage && heart.message) {
+                    messageText = `A ${heartDef.emoji} with the message "<i>${heart.message}</i>" was just placed in ${locationText}`;
+                } else {
+                    messageText = `A ${heartDef.emoji} was just placed in ${locationText}`;
+                }
+                item.innerHTML = messageText;
+                newsTicker.appendChild(item);
+            });
+            
+            let currentItem = 0;
+            const items = newsTicker.querySelectorAll('.ticker-item');
+            if (items.length > 0) {
+                items[currentItem].classList.add('visible');
+                tickerInterval = setInterval(() => {
+                    if (items[currentItem]) items[currentItem].classList.remove('visible');
+                    currentItem = (currentItem + 1) % items.length;
+                    if (items[currentItem]) items[currentItem].classList.add('visible');
+                }, 5000);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadHeartsOnMap(); // This will now fetch from server and then update stats/ticker
+        });
+    </script>
+</body>
+</html>
