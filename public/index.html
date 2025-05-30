@@ -698,10 +698,26 @@
         const mapToggleBtn = document.getElementById('mapToggleBtn');
 
         // --- Heart Definitions ---
+        // !!! IMPORTANT: Replace with your actual Stripe Payment Link URLs !!!
         const HEART_DEFINITIONS = {
-            redHeart: { id: 'redHeart', name: 'Heart', emoji: '❤️', price: 1.00, canAddMessage: false, iconSize: [35, 35], clusterTextColor: '#fff', clusterTextShadow: '1px 1px 3px rgba(0,0,0,0.7)' },
-            silverHeart: { id: 'silverHeart', name: 'Silver Heart', emoji: '🤍', price: 3.00, canAddMessage: true, iconSize: [35, 35], maxLength: 10, clusterTextColor: '#333', clusterTextShadow: '1px 1px 3px rgba(200,200,200,0.7)' },
-            yellowHeart: { id: 'yellowHeart', name: 'Gold Heart', emoji: '💛', price: 5.00, canAddMessage: true, iconSize: [35, 35], maxLength: 25, clusterTextColor: '#333', clusterTextShadow: '1px 1px 3px rgba(255,215,0,0.7)' }
+            redHeart: { 
+                id: 'redHeart', name: 'Heart', emoji: '❤️', price: 1.00, 
+                canAddMessage: false, iconSize: [35, 35], 
+                clusterTextColor: '#fff', clusterTextShadow: '1px 1px 3px rgba(0,0,0,0.7)',
+                stripePaymentUrl: 'https://buy.stripe.com/7sY14o04946ggDB1f16EU00' // Example: 'https://buy.stripe.com/xxxxxxREPLACE_ME'
+            },
+            silverHeart: { 
+                id: 'silverHeart', name: 'Silver Heart', emoji: '🤍', price: 3.00, 
+                canAddMessage: true, iconSize: [35, 35], maxLength: 10, 
+                clusterTextColor: '#333', clusterTextShadow: '1px 1px 3px rgba(200,200,200,0.7)',
+                stripePaymentUrl: 'YOUR_STRIPE_PAYMENT_LINK_URL_FOR_SILVER_HEART' // Example: 'https://buy.stripe.com/yyyyyyREPLACE_ME'
+            },
+            yellowHeart: { 
+                id: 'yellowHeart', name: 'Gold Heart', emoji: '💛', price: 5.00, 
+                canAddMessage: true, iconSize: [35, 35], maxLength: 25, 
+                clusterTextColor: '#333', clusterTextShadow: '1px 1px 3px rgba(255,215,0,0.7)',
+                stripePaymentUrl: 'YOUR_STRIPE_PAYMENT_LINK_URL_FOR_GOLD_HEART' // Example: 'https://buy.stripe.com/zzzzzzREPLACE_ME'
+            }
         };
 
         // --- Map Setup ---
@@ -729,7 +745,7 @@
             worldCopyJump: true,
             maxBounds: bounds,
             maxBoundsViscosity: 1.0,
-            zoomControl: false // Zoom control explicitly hidden
+            zoomControl: false 
         });
         
         baseLayers[currentLayer].addTo(map);
@@ -828,7 +844,7 @@
             const popupEl = document.createElement('div'); 
             popupEl.className = 'heart-selection-popup';
             popupEl.innerHTML = `
-                <h3 class="popup-title">Choose a Heart</h3>
+                <h3 class="popup-title">Choose a Heart & Secure with Stripe</h3>
                 <div class="heart-selection-popup-container">
                     <div class="heart-option-card disabled" data-heart-id="redHeart">
                         <span class="heart-emoji-icon">${HEART_DEFINITIONS.redHeart.emoji}</span>
@@ -876,25 +892,30 @@
 
             heartOptions.forEach(btn => {
                 btn.addEventListener('click', () => {
+                    if (btn.classList.contains('disabled')) return;
+
                     const selectedHeartId = btn.dataset.heartId;
                     const heartDef = HEART_DEFINITIONS[selectedHeartId];
                     
                     if (heartSelectionPopup) map.closePopup(heartSelectionPopup);
-                    
-                    // For now, we skip actual payment and proceed
-                    // window.open('https://stripe.com', '_blank'); 
+                    crossmarkContainer.style.display = 'none';
 
-                    if (heartDef.canAddMessage) {
-                        pendingHeartData = { location: currentMapClickLocation, heartId: selectedHeartId };
-                        messageModalTitle.textContent = `Add a Message to Your ${heartDef.name}`;
-                        messageModalDescription.textContent = `Enter a short message (max ${heartDef.maxLength} characters).`
-                        heartMessageInput.maxLength = heartDef.maxLength;
-                        charCounter.textContent = `${heartDef.maxLength}/${heartDef.maxLength}`;
-                        messageInputOverlay.classList.remove('hidden');
-                        heartMessageInput.focus();
-                    } else {
-                        placeHeart(currentMapClickLocation, '', selectedHeartId);
+
+                    if (!heartDef.stripePaymentUrl || heartDef.stripePaymentUrl.includes('YOUR_STRIPE_PAYMENT_LINK_URL')) {
+                        alert('Stripe Payment Link not configured for this heart. Please contact support or check script `HEART_DEFINITIONS`.');
+                        console.error('Stripe Payment Link missing or placeholder for heartId:', selectedHeartId);
+                        return;
                     }
+                    
+                    const pendingPaymentDetails = {
+                        lat: currentMapClickLocation.lat,
+                        lng: currentMapClickLocation.lng,
+                        heartId: selectedHeartId,
+                        timestamp: Date.now() 
+                    };
+                    localStorage.setItem('pendingPaymentHeart', JSON.stringify(pendingPaymentDetails));
+
+                    window.location.href = heartDef.stripePaymentUrl;
                 });
             });
             
@@ -912,30 +933,88 @@
         });
 
         function closeMessageModal() {
-            if (!pendingHeartData) return;
+            if (!pendingHeartData) return; 
             const heartDef = HEART_DEFINITIONS[pendingHeartData.heartId];
             messageInputOverlay.classList.add('hidden');
             heartMessageInput.value = '';
             if (heartDef && heartDef.maxLength) { 
-                 charCounter.textContent = `${heartDef.maxLength}/${heartDef.maxLength}`;
+                charCounter.textContent = `${heartDef.maxLength}/${heartDef.maxLength}`;
             } else if (heartDef) { 
-                 charCounter.textContent = ''; 
+                charCounter.textContent = ''; 
             }
-            pendingHeartData = null;
+            pendingHeartData = null; 
         }
 
         confirmMessageBtn.addEventListener('click', () => {
-            if (!pendingHeartData) return;
+            if (!pendingHeartData) {
+                 console.error("Confirm message clicked but no pendingHeartData (post-payment).");
+                 return;
+            }
             const message = heartMessageInput.value;
             placeHeart(pendingHeartData.location, message, pendingHeartData.heartId);
             closeMessageModal();
         });
 
         skipMessageBtn.addEventListener('click', () => {
-            if (!pendingHeartData) return;
+            if (!pendingHeartData) {
+                console.error("Skip message clicked but no pendingHeartData (post-payment).");
+                return;
+            }
             placeHeart(pendingHeartData.location, '', pendingHeartData.heartId);
             closeMessageModal();
         });
+
+
+        async function handleSuccessfulPayment() {
+            const pendingPaymentString = localStorage.getItem('pendingPaymentHeart');
+            if (!pendingPaymentString) {
+                console.warn('Payment success redirect, but no pending heart data found in localStorage.');
+                window.history.replaceState({}, document.title, window.location.pathname);
+                return;
+            }
+
+            const StoredPendingData = JSON.parse(pendingPaymentString);
+            localStorage.removeItem('pendingPaymentHeart'); 
+
+            const { lat, lng, heartId } = StoredPendingData;
+            const heartDef = HEART_DEFINITIONS[heartId];
+
+            if (!heartDef) {
+                console.error('Invalid heartId from localStorage after payment:', heartId);
+                alert('There was an issue processing your heart selection after payment. Please try again or contact support.');
+                window.history.replaceState({}, document.title, window.location.pathname);
+                return;
+            }
+
+            currentMapClickLocation = L.latLng(lat, lng); 
+
+            map.panTo(currentMapClickLocation);
+
+            if (heartDef.canAddMessage) {
+                pendingHeartData = { location: currentMapClickLocation, heartId: heartId }; 
+                
+                messageModalTitle.textContent = `Add a Message to Your ${heartDef.name}`;
+                messageModalDescription.textContent = `Enter a short message (max ${heartDef.maxLength} characters).`;
+                heartMessageInput.maxLength = heartDef.maxLength;
+                charCounter.textContent = `${heartDef.maxLength}/${heartDef.maxLength}`;
+                heartMessageInput.value = ''; 
+                messageInputOverlay.classList.remove('hidden');
+                heartMessageInput.focus();
+            } else {
+                placeHeart(currentMapClickLocation, '', heartId);
+            }
+
+            window.history.replaceState({}, document.title, window.location.pathname);
+            
+            if (!heartDef.canAddMessage) {
+                L.popup()
+                 .setLatLng(currentMapClickLocation)
+                 .setContent('Payment successful! Your heart is being placed.')
+                 .openOn(map);
+                setTimeout(() => { if(map.getPopup()) {map.closePopup();} }, 3000);
+            }
+        }
+
 
         function createHeartMarkerIcon(heartData) {
             const heartDef = HEART_DEFINITIONS[heartData.type];
@@ -949,14 +1028,11 @@
             });
         }
         
-        // getCountryFromLatLng is now handled by the server.
-        // We keep getFlagHTML as it's used by the news ticker (and potentially popups).
         function getFlagHTML(countryCode) {
             if (!countryCode || countryCode === 'XX') {
-                return '<span class="flag-emoji">🏳️</span>'; // Default or unknown flag
+                return '<span class="flag-emoji">🏳️</span>'; 
             }
             const code = countryCode.toLowerCase();
-            // Using a reliable CDN for flags
             return `<img class="flag-emoji" src="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.5.0/flags/4x3/${code}.svg"
                          width="20" alt="${countryCode}" style="border: 1px solid #ccc; border-radius:2px; object-fit:cover; height:13px;">`;
         }
@@ -981,7 +1057,7 @@
             };
 
             try {
-                const response = await fetch('/api/hearts', { // Ensure this matches your server port
+                const response = await fetch('/api/hearts', { 
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -996,8 +1072,8 @@
 
                 const newHeartFromServer = await response.json();
                 console.log('Heart placed via server:', newHeartFromServer);
-                crossmarkContainer.style.display = 'none';
-                loadHeartsOnMap(); // This will fetch all hearts including the new one
+                crossmarkContainer.style.display = 'none'; 
+                loadHeartsOnMap(); 
 
             } catch (error) {
                 console.error('Failed to place heart:', error);
@@ -1012,22 +1088,21 @@
             yellowHeartMarkers.clearLayers();
 
             try {
-                const response = await fetch('/api/hearts'); // Ensure this matches your server port
+                const response = await fetch('/api/hearts'); 
                 if (!response.ok) {
                     throw new Error(`Server responded with ${response.status}`);
                 }
                 const allHeartsData = await response.json();
-                window.currentAllHeartsData = allHeartsData; // Make data globally accessible
+                window.currentAllHeartsData = allHeartsData; 
 
-                allHeartsData.forEach(heart => { // heart object comes from server
+                allHeartsData.forEach(heart => { 
                     const heartDef = HEART_DEFINITIONS[heart.type];
                     if (!heartDef) {
                         console.warn("Unknown heart type from server:", heart.type);
                         return;
                     }
 
-                    const icon = createHeartMarkerIcon(heart); // Pass the whole heart object
-                    // Server provides latitude and longitude directly
+                    const icon = createHeartMarkerIcon(heart); 
                     const marker = L.marker([heart.latitude, heart.longitude], { icon: icon }); 
                     
                     let messageContent = heart.message ? `<div class="heart-message">"${heart.message}"</div>` : '';
@@ -1060,16 +1135,15 @@
 
             } catch (error) {
                 console.error('Failed to load hearts:', error);
-                // Consider showing a user-friendly error message here
             }
         }
         
         function updateStats() {
-            const allHearts = window.currentAllHeartsData || []; // Use data fetched from server
+            const allHearts = window.currentAllHeartsData || []; 
             const redHearts = allHearts.filter(h => h.type === 'redHeart').length;
             const silverHearts = allHearts.filter(h => h.type === 'silverHeart').length;
             const yellowHearts = allHearts.filter(h => h.type === 'yellowHeart').length;
-            const countries = new Set(allHearts.map(h => h.countryCode).filter(code => code && code !== 'XX')).size; // Count unique, valid country codes
+            const countries = new Set(allHearts.map(h => h.countryCode).filter(code => code && code !== 'XX')).size; 
             
             document.getElementById('stats-red').textContent = redHearts;
             document.getElementById('stats-silver').textContent = silverHearts;
@@ -1079,20 +1153,20 @@
         
         function updateNewsTicker() {
             if (tickerInterval) clearInterval(tickerInterval);
-            const allHearts = window.currentAllHeartsData || []; // Use data fetched from server
-            const recentHearts = allHearts.slice(0, 10); // Assumes server sorts by newest first
+            const allHearts = window.currentAllHeartsData || []; 
+            const recentHearts = allHearts.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, 10); 
             
             if (recentHearts.length === 0) {
                 newsTicker.innerHTML = `<div class="ticker-item visible">Be the first to place a heart on the map! ❤️</div>`;
                 return;
             }
             
-            newsTicker.innerHTML = ''; // Clear previous items
-            recentHearts.forEach(heart => { // heart object from server
+            newsTicker.innerHTML = ''; 
+            recentHearts.forEach(heart => { 
                 const heartDef = HEART_DEFINITIONS[heart.type];
                 if (!heartDef) return;
 
-                const flagHTML = getFlagHTML(heart.countryCode); // Use countryCode from server
+                const flagHTML = getFlagHTML(heart.countryCode); 
                 const item = document.createElement('div');
                 item.className = 'ticker-item';
                 
@@ -1101,7 +1175,7 @@
                 if (heart.countryCode && heart.countryCode !== 'XX') {
                      locationText = `${flagHTML} ${locationText}`;
                 } else {
-                     locationText = `${flagHTML} ${locationText}`; // Still show default flag for open sea/unknown
+                     locationText = `${flagHTML} ${locationText}`; 
                 }
 
 
@@ -1117,7 +1191,7 @@
             let currentItem = 0;
             const items = newsTicker.querySelectorAll('.ticker-item');
             if (items.length > 0) {
-                items[currentItem].classList.add('visible');
+                if(items[currentItem]) items[currentItem].classList.add('visible'); // Check if items[currentItem] exists
                 tickerInterval = setInterval(() => {
                     if (items[currentItem]) items[currentItem].classList.remove('visible');
                     currentItem = (currentItem + 1) % items.length;
@@ -1127,7 +1201,21 @@
         }
 
         document.addEventListener('DOMContentLoaded', () => {
-            loadHeartsOnMap(); // This will now fetch from server and then update stats/ticker
+            const urlParams = new URLSearchParams(window.location.search);
+
+            if (urlParams.has('payment_success') && urlParams.get('payment_success') === 'true') {
+                handleSuccessfulPayment(); 
+            } else if (urlParams.has('payment_cancelled') && urlParams.get('payment_cancelled') === 'true') {
+                alert('Payment was cancelled.');
+                localStorage.removeItem('pendingPaymentHeart'); 
+                window.history.replaceState({}, document.title, window.location.pathname); 
+            } else if (urlParams.has('payment_failed') && urlParams.get('payment_failed') === 'true') { 
+                alert('Payment failed. Please try again.');
+                localStorage.removeItem('pendingPaymentHeart');
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+
+            loadHeartsOnMap(); 
         });
     </script>
 </body>
