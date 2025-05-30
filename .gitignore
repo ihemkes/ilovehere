@@ -1,0 +1,5 @@
+# Environment variables - DO NOT UPLOAD THIS FILE
+.env
+
+# Dependencies
+node_modules/
